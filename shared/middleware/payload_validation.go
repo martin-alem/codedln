@@ -20,15 +20,15 @@ func PayloadValidationMiddleware[T types.ValidatableSchema](factory func() T) ty
 			payloadSchema := factory()
 
 			if err := decoder.Decode(&payloadSchema); err != nil {
-				return http_error.New(400, "invalid payload")
+				return http_error.New(http.StatusBadRequest, "invalid payload")
 			}
 
 			// Validate fields
 			if err := payloadSchema.Validate(); err != nil {
-				return http_error.New(400, "Validation error: "+err.Error())
+				return http_error.New(http.StatusBadRequest, "Validation error: "+err.Error())
 			}
 
-			ctx := context.WithValue(r.Context(), types.PayloadKey{}, payloadSchema)
+			ctx := context.WithValue(r.Context(), constant.PayloadKey, payloadSchema)
 			return handler(w, r.WithContext(ctx))
 		}
 	}

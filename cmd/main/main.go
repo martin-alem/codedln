@@ -3,8 +3,10 @@ package main
 import (
 	"codedln/shared/mongodb"
 	"codedln/shared/redis"
+	"codedln/user_module/module"
 	"context"
 	"errors"
+	"github.com/go-redis/redis_rate/v10"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"log"
@@ -28,13 +30,17 @@ func main() {
 	//Connect to mongo database
 	mClient := mongodb.ConnectToDatabase()
 
+	//Database
+	db := mClient.Database(os.Getenv("DATABASE_NAME"))
+
 	//Connect to redis
 	rClient := redis.ConnectToRedis()
 
 	//Initialize RateLimiter
-	//rateLimiter := redis_rate.NewLimiter(rClient)
+	rateLimiter := redis_rate.NewLimiter(rClient)
 
 	//Mount Modules
+	module.UserModule(r, rateLimiter, db)
 
 	//Setup Http Server
 	server := &http.Server{

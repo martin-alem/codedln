@@ -1,6 +1,9 @@
 package types
 
-import "net/http"
+import (
+	"github.com/golang-jwt/jwt/v5"
+	"net/http"
+)
 
 type HTTPHandler func(http.ResponseWriter, *http.Request) error
 
@@ -11,3 +14,16 @@ type ValidatableSchema interface {
 }
 
 type PayloadKey struct{}
+
+type OAuthSignIn string
+
+type ContextKey int
+
+type JWTClaim struct {
+	UserId string `json:"userId"`
+	jwt.RegisteredClaims
+}
+
+type AuthUser struct {
+	UserId string `json:"userId"`
+}
