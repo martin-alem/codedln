@@ -26,6 +26,29 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 
 	userRouter := router.PathPrefix("/user").Subrouter()
 
+	userRouter.HandleFunc("/logout",
+		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
+			userController.LogOut,
+			middleware.CorsMiddleware,
+			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
+				Rate:   10,
+				Burst:  5,
+				Period: time.Minute * 2,
+			}),
+		))).Methods("DELETE")
+
+	userRouter.HandleFunc("",
+		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
+			userController.DeleteUser,
+			middleware.AuthenticationMiddleware,
+			middleware.CorsMiddleware,
+			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
+				Rate:   100,
+				Burst:  50,
+				Period: time.Minute * 2,
+			}),
+		))).Methods("DELETE")
+
 	userRouter.HandleFunc("",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			userController.CreateUser,
@@ -49,15 +72,4 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 				Period: time.Minute * 2,
 			}),
 		))).Methods("GET")
-
-	userRouter.HandleFunc("",
-		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
-			userController.LogOut,
-			middleware.CorsMiddleware,
-			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
-				Rate:   10,
-				Burst:  5,
-				Period: time.Minute * 2,
-			}),
-		))).Methods("DELETE")
 }

@@ -6,7 +6,11 @@ import (
 	"context"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
 	"net/http"
 )
@@ -14,7 +18,7 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, user model.User) (*model.User, error)
 	GetUser(ctx context.Context, filter map[string]any) (*model.User, error)
-	DeleteUser(ctx, context, userId string) *model.User
+	DeleteUser(ctx context.Context, userId string) error
 }
 
 type MongoRepository struct {
@@ -61,7 +65,36 @@ func (r *MongoRepository) GetUser(ctx context.Context, filter map[string]any) (*
 	return &user, nil
 }
 
-func (r *MongoRepository) DeleteUser(ctx, context, userId string) *model.User {
-	//TODO implement me
-	panic("implement me")
+func (r *MongoRepository) DeleteUser(ctx context.Context, userId string) error {
+
+	objectId, err := primitive.ObjectIDFromHex(userId)
+	filter := map[string]any{"_id": objectId}
+	if err != nil {
+		return http_error.New(http.StatusBadRequest, "trying to delete user with invalid id")
+	}
+
+	opts := options.Session().SetDefaultReadConcern(readconcern.Majority())
+	sess, err := r.collection.Database().Client().StartSession(opts)
+	if err != nil {
+		return http_error.New(http.StatusInternalServerError, "error starting transaction")
+	}
+	defer sess.EndSession(ctx)
+
+	txnOpts := options.Transaction().SetReadPreference(readpref.PrimaryPreferred())
+	_, err = sess.WithTransaction(ctx, func(txnCtx mongo.SessionContext) (interface{}, error) {
+		//Delete all data associated with user
+
+		//Delete user
+		_, deleteErr := r.collection.DeleteOne(ctx, filter)
+		if deleteErr != nil {
+			return http_error.New(http.StatusInternalServerError, "error deleting user"), nil
+		}
+		return nil, nil
+	}, txnOpts)
+
+	if err != nil {
+		return http_error.New(http.StatusBadRequest, "trying to delete user with invalid id")
+	}
+
+	return nil
 }

@@ -99,3 +99,12 @@ func CreateCook(name string, value string, ttl int) http.Cookie {
 
 	return cookie
 }
+
+func NotFound() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		data := map[string]interface{}{"message": "Resource Not Found", "statusCode": http.StatusNotFound, "path": r.URL.Path, "method": r.Method, "timestamp": time.Now().UTC()}
+		_ = json.NewEncoder(w).Encode(data)
+	}
+}

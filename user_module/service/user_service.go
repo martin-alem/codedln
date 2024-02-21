@@ -60,6 +60,10 @@ func (s *UserService) GetUser(ctx context.Context, userId string) (*model.User, 
 	return s.repo.GetUser(ctx, filter)
 }
 
+func (s *UserService) DeleteUser(ctx context.Context, userId string) error {
+	return s.repo.DeleteUser(ctx, userId)
+}
+
 func google(ctx context.Context, idToken string) (*model.User, error) {
 	// Validate the ID token and obtain the payload
 	payload, err := idtoken.Validate(ctx, idToken, os.Getenv("GOOGLE_CLIENT_ID"))

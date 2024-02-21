@@ -4,6 +4,7 @@ import (
 	"codedln/shared/mongodb"
 	"codedln/shared/redis"
 	"codedln/user_module/module"
+	"codedln/util/helpers"
 	"context"
 	"errors"
 	"github.com/go-redis/redis_rate/v10"
@@ -26,6 +27,8 @@ func main() {
 
 	//Initialize mux
 	r := mux.NewRouter()
+
+	r.NotFoundHandler = helpers.NotFound()
 
 	//Connect to mongo database
 	mClient := mongodb.ConnectToDatabase()

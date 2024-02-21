@@ -68,6 +68,25 @@ func (c *UserController) GetUser(w http.ResponseWriter, r *http.Request) error {
 	return helpers.JSONResponse(w, http.StatusOK, user)
 }
 
+func (c *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) error {
+	value := r.Context().Value(constant.AuthUserKey)
+
+	if value == nil {
+		return http_error.New(http.StatusBadRequest, "could not get user id")
+	}
+	payload, ok := value.(types.AuthUser)
+	if !ok {
+		return http_error.New(http.StatusBadRequest, "invalid user id")
+	}
+	err := c.userService.DeleteUser(r.Context(), payload.UserId)
+
+	if err != nil {
+		return err
+	}
+
+	return helpers.JSONResponse(w, http.StatusNoContent, nil)
+}
+
 func (c *UserController) LogOut(w http.ResponseWriter, r *http.Request) error {
 	cookie := helpers.CreateCook(constant.JwtCookieName, "", 0)
 	http.SetCookie(w, &cookie)
