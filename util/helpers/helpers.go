@@ -97,7 +97,7 @@ func CreateJWT(claim types.AuthUser, ttl int) string {
 	return ss
 }
 
-func CreateCook(name string, value string, ttl int) http.Cookie {
+func CreateCookie(name string, value string, ttl int) http.Cookie {
 	cookie := http.Cookie{
 		Name:     name,
 		Value:    value,

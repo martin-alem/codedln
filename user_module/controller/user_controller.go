@@ -43,7 +43,7 @@ func (c *UserController) CreateUser(w http.ResponseWriter, r *http.Request) erro
 		return http_error.New(http.StatusInternalServerError, "unable to create jwt")
 	}
 
-	cookie := helpers.CreateCook(constant.JwtCookieName, accessToken, constant.AccessTokenTTL)
+	cookie := helpers.CreateCookie(constant.JwtCookieName, accessToken, constant.AccessTokenTTL)
 	http.SetCookie(w, &cookie)
 
 	return helpers.JSONResponse(w, http.StatusCreated, user)
@@ -88,7 +88,7 @@ func (c *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) erro
 }
 
 func (c *UserController) LogOut(w http.ResponseWriter, r *http.Request) error {
-	cookie := helpers.CreateCook(constant.JwtCookieName, "", 0)
+	cookie := helpers.CreateCookie(constant.JwtCookieName, "", 0)
 	http.SetCookie(w, &cookie)
 	return helpers.JSONResponse(w, http.StatusOK, nil)
 }
