@@ -7,6 +7,7 @@ import (
 	"codedln/util/constant"
 	"codedln/util/types"
 	"context"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/api/idtoken"
 	"net/http"
 	"os"
@@ -31,15 +32,32 @@ func (s *UserService) CreateUser(ctx context.Context, idToken string, signInWith
 			return nil, err
 		}
 
-		user, err := s.repo.GetUser(ctx, map[string]string{"email": payload.Email})
+		user, err := s.repo.GetUser(ctx, map[string]any{"email": payload.Email})
+		//User does not exist in database
 		if user == nil && err == nil {
 			return s.repo.CreateUser(ctx, *payload)
 		}
-		return user, nil
+
+		//User exist in database
+		if user != nil && err == nil {
+			return user, nil
+		}
+
+		//An error occurred while trying to fetch user
+		return nil, err
 
 	default:
 		return nil, http_error.New(http.StatusBadRequest, "invalid oauth type")
 	}
+}
+
+func (s *UserService) GetUser(ctx context.Context, userId string) (*model.User, error) {
+	objectId, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return nil, http_error.New(http.StatusBadRequest, "invalid user id")
+	}
+	filter := map[string]any{"_id": objectId}
+	return s.repo.GetUser(ctx, filter)
 }
 
 func google(ctx context.Context, idToken string) (*model.User, error) {

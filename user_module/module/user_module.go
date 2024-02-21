@@ -32,9 +32,21 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 			middleware.PayloadValidationMiddleware(model.NewCreateUserSchema),
 			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
+				Rate:   10,
+				Burst:  5,
+				Period: time.Minute * 2,
+			}),
+		))).Methods("POST")
+
+	userRouter.HandleFunc("",
+		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
+			userController.GetUser,
+			middleware.AuthenticationMiddleware,
+			middleware.CorsMiddleware,
+			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   100,
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
-		))).Methods("POST")
+		))).Methods("GET")
 }

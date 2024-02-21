@@ -37,7 +37,7 @@ func (c *UserController) CreateUser(w http.ResponseWriter, r *http.Request) erro
 		return err
 	}
 
-	accessToken := helpers.CreateJWT(types.AuthUser{UserId: user.ID.String()}, constant.AccessTokenTTL)
+	accessToken := helpers.CreateJWT(types.AuthUser{UserId: user.ID.Hex()}, constant.AccessTokenTTL)
 
 	if accessToken == "" {
 		return http_error.New(http.StatusInternalServerError, "unable to create jwt")
@@ -47,4 +47,23 @@ func (c *UserController) CreateUser(w http.ResponseWriter, r *http.Request) erro
 	http.SetCookie(w, &cookie)
 
 	return helpers.JSONResponse(w, http.StatusCreated, user)
+}
+
+func (c *UserController) GetUser(w http.ResponseWriter, r *http.Request) error {
+	value := r.Context().Value(constant.AuthUserKey)
+
+	if value == nil {
+		return http_error.New(http.StatusBadRequest, "could not get user id")
+	}
+	payload, ok := value.(types.AuthUser)
+	if !ok {
+		return http_error.New(http.StatusBadRequest, "invalid user id")
+	}
+
+	user, err := c.userService.GetUser(r.Context(), payload.UserId)
+	if err != nil {
+		return err
+	}
+
+	return helpers.JSONResponse(w, http.StatusOK, user)
 }

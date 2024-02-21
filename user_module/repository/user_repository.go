@@ -13,7 +13,7 @@ import (
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, user model.User) (*model.User, error)
-	GetUser(ctx context.Context, filter map[string]string) (*model.User, error)
+	GetUser(ctx context.Context, filter map[string]any) (*model.User, error)
 	DeleteUser(ctx, context, userId string) *model.User
 }
 
@@ -46,7 +46,7 @@ func (r *MongoRepository) CreateUser(ctx context.Context, user model.User) (*mod
 	return &newUser, nil
 }
 
-func (r *MongoRepository) GetUser(ctx context.Context, filter map[string]string) (*model.User, error) {
+func (r *MongoRepository) GetUser(ctx context.Context, filter map[string]any) (*model.User, error) {
 
 	res := r.collection.FindOne(ctx, filter)
 	if errors.Is(res.Err(), mongo.ErrNoDocuments) {
@@ -58,7 +58,7 @@ func (r *MongoRepository) GetUser(ctx context.Context, filter map[string]string)
 		return nil, http_error.New(http.StatusInternalServerError, "unable to get user")
 	}
 
-	return &user, errors.New("user exist")
+	return &user, nil
 }
 
 func (r *MongoRepository) DeleteUser(ctx, context, userId string) *model.User {
