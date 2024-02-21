@@ -19,10 +19,11 @@ import (
 
 func main() {
 
-	//Load values in.evn file to environment
-	dotErr := godotenv.Load()
-	if dotErr != nil {
-		log.Fatalf("Error loading .env file: %v", dotErr)
+	if os.Getenv("ENVIRONMENT") == "development" || os.Getenv("ENVIRONMENT") == "" {
+		dotErr := godotenv.Load()
+		if dotErr != nil {
+			log.Fatalf("Error loading .env file: %v", dotErr)
+		}
 	}
 
 	//Initialize mux

@@ -1,10 +1,12 @@
 package helpers
 
 import (
+	"bytes"
 	"codedln/shared/http_error"
 	"codedln/util/types"
 	"encoding/json"
 	"github.com/golang-jwt/jwt/v5"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -31,18 +33,27 @@ func JSONResponse(w http.ResponseWriter, statusCode int, data any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	if data != nil {
-		err := json.NewEncoder(w).Encode(data)
-		if err != nil {
-			return http_error.New(500, "internal server error")
+	var payload any
+	if statusCode >= 400 {
+		payload = data
+	} else {
+		payload = map[string]any{
+			"status_code": statusCode,
+			"data":        data,
 		}
 	}
+
+	err := json.NewEncoder(w).Encode(payload)
+	if err != nil {
+		return http_error.New(500, "internal server error")
+	}
+
 	return nil
 }
 
 // JSONDecode decodes a JSON request into a struct.
-func JSONDecode(r *http.Request, dst any) error {
-	decoder := json.NewDecoder(r.Body)
+func JSONDecode(r io.Reader, dst any) error {
+	decoder := json.NewDecoder(r)
 	return decoder.Decode(dst)
 }
 
@@ -107,4 +118,17 @@ func NotFound() http.HandlerFunc {
 		data := map[string]interface{}{"message": "Resource Not Found", "statusCode": http.StatusNotFound, "path": r.URL.Path, "method": r.Method, "timestamp": time.Now().UTC()}
 		_ = json.NewEncoder(w).Encode(data)
 	}
+}
+
+func AnyTypeToReader(data interface{}) (io.Reader, error) {
+	// Serialize the data to JSON
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return nil, err // Handle serialization errors
+	}
+
+	// Create a bytes.Reader from the serialized data
+	reader := bytes.NewReader(jsonData)
+
+	return reader, nil
 }

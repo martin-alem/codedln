@@ -9,26 +9,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"os"
-	"strings"
 )
 
 func AuthenticationMiddleware(next types.HTTPHandler) types.HTTPHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		header := r.Header.Get("Authorization")
-		if header == "" {
-			return http_error.New(http.StatusUnauthorized, "authentication required")
-		}
-
-		headerSlice := strings.Split(header, " ")
-
-		if len(headerSlice) < 2 {
-			return http_error.New(http.StatusBadRequest, "malformed client authentication header")
-		}
-
-		if strings.Compare(headerSlice[1], os.Getenv("CLIENT_KEY")) != 0 {
-			return http_error.New(http.StatusUnauthorized, "invalid client authentication token")
-		}
-
 		cookie, cookieErr := r.Cookie(constant.JwtCookieName)
 		switch {
 		case errors.Is(cookieErr, http.ErrNoCookie):

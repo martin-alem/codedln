@@ -35,6 +35,7 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 				Burst:  5,
 				Period: time.Minute * 2,
 			}),
+			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("DELETE")
 
 	userRouter.HandleFunc("",
@@ -47,6 +48,7 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
+			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("DELETE")
 
 	userRouter.HandleFunc("",
@@ -59,6 +61,7 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 				Burst:  5,
 				Period: time.Minute * 2,
 			}),
+			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("POST")
 
 	userRouter.HandleFunc("",
@@ -71,5 +74,6 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
+			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("GET")
 }
