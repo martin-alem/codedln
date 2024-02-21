@@ -67,3 +67,10 @@ func (c *UserController) GetUser(w http.ResponseWriter, r *http.Request) error {
 
 	return helpers.JSONResponse(w, http.StatusOK, user)
 }
+
+func (c *UserController) LogOut(w http.ResponseWriter, r *http.Request) error {
+	cookie := helpers.CreateCook(constant.JwtCookieName, "", 0)
+	http.SetCookie(w, &cookie)
+
+	return helpers.JSONResponse(w, http.StatusNoContent, nil)
+}

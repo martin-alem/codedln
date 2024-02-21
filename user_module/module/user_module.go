@@ -49,4 +49,15 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 				Period: time.Minute * 2,
 			}),
 		))).Methods("GET")
+
+	userRouter.HandleFunc("",
+		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
+			userController.LogOut,
+			middleware.CorsMiddleware,
+			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
+				Rate:   10,
+				Burst:  5,
+				Period: time.Minute * 2,
+			}),
+		))).Methods("DELETE")
 }
