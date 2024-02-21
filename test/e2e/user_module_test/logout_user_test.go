@@ -11,17 +11,15 @@ import (
 	"codedln/util/helpers"
 	"codedln/util/types"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/go-redis/redis_rate/v10"
 	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -36,7 +34,7 @@ func init() {
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
+func TestLogoutUser(t *testing.T) {
 	t.Parallel()
 	client := mongodb.ConnectToDatabase()
 
@@ -60,8 +58,6 @@ func TestDeleteUser(t *testing.T) {
 		log.Fatalf("%s does not exist:", constant.UserCollection)
 	}
 
-	r, _ := collection.InsertOne(context.TODO(), map[string]any{"firstname": "Martin", "lastname": "Alemajoh", "email": "alemajohmartin@gmail.com", "verified": true})
-
 	defer func() {
 		_, _ = collection.DeleteMany(context.TODO(), map[string]string{})
 	}()
@@ -71,8 +67,7 @@ func TestDeleteUser(t *testing.T) {
 	userController := controller.New(userService)
 
 	server := httptest.NewServer(middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
-		userController.DeleteUser,
-		middleware.AuthenticationMiddleware,
+		userController.Logout,
 		middleware.CorsMiddleware,
 		middleware.RateLimitMiddleware(rateLimiter, redis_rate.Limit{
 			Rate:   10,
@@ -88,59 +83,23 @@ func TestDeleteUser(t *testing.T) {
 		description    string
 		endpoint       string
 		method         string
-		setCookie      bool
 		clientKey      string
-		jwt            string
 		check          bool
 		expectedStatus int
 	}{
 		{
 			description:    "Should return a 401 status code with invalid client authorization key",
-			endpoint:       fmt.Sprintf("%s", server.URL),
+			endpoint:       fmt.Sprintf("%s", server.URL+"/logout"),
 			method:         "DELETE",
-			setCookie:      false,
 			clientKey:      "bad_client_key",
-			jwt:            "",
 			check:          false,
 			expectedStatus: 401,
 		},
 		{
-			description:    "Should return a 401 status code with no cookie set",
-			endpoint:       fmt.Sprintf("%s", server.URL),
+			description:    "Should return a 200 status code with valid client key",
+			endpoint:       fmt.Sprintf("%s", server.URL+"/logout"),
 			method:         "DELETE",
-			setCookie:      false,
 			clientKey:      os.Getenv("CLIENT_KEY"),
-			jwt:            "",
-			check:          false,
-			expectedStatus: 401,
-		},
-		{
-			description:    "Should return a 401 status code with invalid jwt",
-			endpoint:       fmt.Sprintf("%s", server.URL),
-			method:         "DELETE",
-			setCookie:      true,
-			clientKey:      os.Getenv("CLIENT_KEY"),
-			jwt:            "invalid_token",
-			check:          false,
-			expectedStatus: 401,
-		},
-		{
-			description:    "Should return a 401 status code with expired jwt",
-			endpoint:       fmt.Sprintf("%s", server.URL),
-			method:         "DELETE",
-			setCookie:      true,
-			clientKey:      os.Getenv("CLIENT_KEY"),
-			jwt:            helpers.CreateJWT(types.AuthUser{UserId: r.InsertedID.(primitive.ObjectID).Hex()}, -1),
-			check:          false,
-			expectedStatus: 401,
-		},
-		{
-			description:    "Should return a 200 status code with valid jwt",
-			endpoint:       fmt.Sprintf("%s", server.URL),
-			method:         "DELETE",
-			setCookie:      true,
-			clientKey:      os.Getenv("CLIENT_KEY"),
-			jwt:            helpers.CreateJWT(types.AuthUser{UserId: r.InsertedID.(primitive.ObjectID).Hex()}, constant.AccessTokenTTL),
 			check:          true,
 			expectedStatus: 200,
 		},
@@ -152,22 +111,18 @@ func TestDeleteUser(t *testing.T) {
 			req, err := http.NewRequest(test.method, test.endpoint, nil)
 			req.Header.Add("Authorization", fmt.Sprintf("%s %s", "Bearer", test.clientKey))
 			req.Header.Add("Content-Type", "application/json")
-			if test.setCookie {
-				cookie := &http.Cookie{
-					Name:  constant.JwtCookieName,
-					Value: test.jwt,
-				}
-				req.AddCookie(cookie)
-			}
+
 			resp, err := client.Do(req)
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			if test.check {
-				s := collection.FindOne(context.TODO(), map[string]any{"_id": r.InsertedID})
-				if !errors.Is(s.Err(), mongo.ErrNoDocuments) {
-					t.Errorf("expected document to have been deleted")
+				cookie := resp.Header.Get("Set-Cookie")
+				accessToken := strings.Split(cookie, ";")
+				value := strings.Split(accessToken[0], "=")
+				if value[1] != "" {
+					t.Errorf("expect access token to be empty")
 				}
 			}
 

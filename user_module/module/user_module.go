@@ -28,7 +28,7 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 
 	userRouter.HandleFunc("/logout",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
-			userController.LogOut,
+			userController.Logout,
 			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   10,

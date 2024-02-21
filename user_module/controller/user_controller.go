@@ -87,7 +87,7 @@ func (c *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) erro
 	return helpers.JSONResponse(w, http.StatusOK, nil)
 }
 
-func (c *UserController) LogOut(w http.ResponseWriter, r *http.Request) error {
+func (c *UserController) Logout(w http.ResponseWriter, r *http.Request) error {
 	cookie := helpers.CreateCookie(constant.JwtCookieName, "", 0)
 	http.SetCookie(w, &cookie)
 	return helpers.JSONResponse(w, http.StatusOK, nil)
