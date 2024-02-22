@@ -66,7 +66,7 @@ func InList[T any](list []T, target T, predicate func(a T, b T) bool) bool {
 	return false
 }
 
-func ternary[T any](expr bool, result1 T, result2 T) T {
+func Ternary[T any](expr bool, result1 T, result2 T) T {
 	if expr == true {
 		return result1
 	} else {
@@ -103,9 +103,9 @@ func CreateCookie(name string, value string, ttl int) http.Cookie {
 		Value:    value,
 		Path:     "/",
 		Expires:  time.Now().Add(time.Duration(ttl) * time.Hour),
-		HttpOnly: ternary[bool](os.Getenv("ENVIRONMENT") == "production", true, false),
+		HttpOnly: Ternary[bool](os.Getenv("ENVIRONMENT") == "production", true, false),
 		SameSite: http.SameSiteStrictMode,
-		Secure:   ternary[bool](os.Getenv("ENVIRONMENT") == "production", true, false),
+		Secure:   Ternary[bool](os.Getenv("ENVIRONMENT") == "production", true, false),
 	}
 
 	return cookie

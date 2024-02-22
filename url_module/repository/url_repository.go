@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
@@ -17,9 +18,9 @@ import (
 type UrlRepository interface {
 	CreateUrl(ctx context.Context, url model.Url) (*model.Url, error)
 	GetUrl(ctx context.Context, filter map[string]any) (*model.Url, error)
-	GetUrls(ctx context.Context, searchFilter map[string]any, sortFilter map[string]any, limit int64) (*types.PaginationResult[model.Url], error)
+	GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64) (*types.PaginationResult[model.Url], error)
 	DeleteUrl(ctx context.Context, filter map[string]any) error
-	DeleteUrls(ctx context.Context, filter map[string]any) error
+	DeleteUrls(ctx context.Context, urlIds []primitive.ObjectID) error
 }
 
 type MongoUrlRepository struct {
@@ -67,7 +68,15 @@ func (r *MongoUrlRepository) GetUrl(ctx context.Context, filter map[string]any) 
 	return &url, nil
 }
 
-func (r *MongoUrlRepository) GetUrls(ctx context.Context, searchFilter map[string]any, sortFilter map[string]any, limit int64) (*types.PaginationResult[model.Url], error) {
+func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64) (*types.PaginationResult[model.Url], error) {
+
+	searchFilter := bson.D{
+		{"$or", bson.A{
+			bson.D{{"alias", bson.D{{"$regex", query}, {"$options", "i"}}}},
+			bson.D{{"originalUrl", bson.D{{"$regex", query}, {"$options", "i"}}}},
+		}},
+	}
+
 	// First, calculate the total count of documents matching the searchFilter
 	totalCount, err := r.collection.CountDocuments(ctx, searchFilter)
 	if err != nil {
@@ -78,7 +87,7 @@ func (r *MongoUrlRepository) GetUrls(ctx context.Context, searchFilter map[strin
 	// Then, fetch the documents with sorting and limiting
 	pipeline := bson.D{
 		{Key: "$match", Value: searchFilter},
-		{Key: "$sort", Value: sortFilter},
+		{Key: "$sort", Value: bson.D{{"createdAt", sort}}},
 		{Key: "$limit", Value: limit},
 	}
 
@@ -108,16 +117,15 @@ func (r *MongoUrlRepository) DeleteUrl(ctx context.Context, filter map[string]an
 		log.Println(err)
 		return http_error.New(http.StatusInternalServerError, "unable to delete url")
 	}
-
 	return nil
 }
 
-func (r *MongoUrlRepository) DeleteUrls(ctx context.Context, filter map[string]any) error {
+func (r *MongoUrlRepository) DeleteUrls(ctx context.Context, urlIds []primitive.ObjectID) error {
+	filter := bson.M{"_id": bson.M{"$in": urlIds}}
 	_, err := r.collection.DeleteMany(ctx, filter)
 	if err != nil {
 		log.Println(err)
 		return http_error.New(http.StatusInternalServerError, "unable to delete urls")
 	}
-
 	return nil
 }
