@@ -21,17 +21,17 @@ type UserRepository interface {
 	DeleteUser(ctx context.Context, userId string) error
 }
 
-type MongoRepository struct {
+type MongoUserRepository struct {
 	collection *mongo.Collection
 }
 
 func New(collection *mongo.Collection) UserRepository {
-	return &MongoRepository{
+	return &MongoUserRepository{
 		collection: collection,
 	}
 }
 
-func (r *MongoRepository) CreateUser(ctx context.Context, user model.User) (*model.User, error) {
+func (r *MongoUserRepository) CreateUser(ctx context.Context, user model.User) (*model.User, error) {
 	res, err := r.collection.InsertOne(ctx, user)
 
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *MongoRepository) CreateUser(ctx context.Context, user model.User) (*mod
 	return &newUser, nil
 }
 
-func (r *MongoRepository) GetUser(ctx context.Context, filter map[string]any) (*model.User, error) {
+func (r *MongoUserRepository) GetUser(ctx context.Context, filter map[string]any) (*model.User, error) {
 
 	res := r.collection.FindOne(ctx, filter)
 	if errors.Is(res.Err(), mongo.ErrNoDocuments) {
@@ -65,7 +65,7 @@ func (r *MongoRepository) GetUser(ctx context.Context, filter map[string]any) (*
 	return &user, nil
 }
 
-func (r *MongoRepository) DeleteUser(ctx context.Context, userId string) error {
+func (r *MongoUserRepository) DeleteUser(ctx context.Context, userId string) error {
 
 	objectId, err := primitive.ObjectIDFromHex(userId)
 	filter := map[string]any{"_id": objectId}

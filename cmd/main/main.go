@@ -17,14 +17,16 @@ import (
 	"time"
 )
 
-func main() {
-
+func init() {
 	if os.Getenv("ENVIRONMENT") == "development" || os.Getenv("ENVIRONMENT") == "" {
 		dotErr := godotenv.Load()
 		if dotErr != nil {
 			log.Fatalf("Error loading .env file: %v", dotErr)
 		}
 	}
+}
+
+func main() {
 
 	//Initialize mux
 	r := mux.NewRouter()

@@ -43,3 +43,8 @@ type GoogleOAuthResponse struct {
 	TokenType   string `json:"token_type"`
 	IdToken     string `json:"id_token"`
 }
+
+type PaginationResult[T any] struct {
+	Data  []T   `json:"data"`
+	Total int64 `json:"total"`
+}
