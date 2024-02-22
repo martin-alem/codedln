@@ -17,10 +17,10 @@ import (
 
 type UrlRepository interface {
 	CreateUrl(ctx context.Context, url model.Url) (*model.Url, error)
-	GetUrl(ctx context.Context, filter map[string]any) (*model.Url, error)
-	GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64) (*types.PaginationResult[model.Url], error)
-	DeleteUrl(ctx context.Context, filter map[string]any) error
-	DeleteUrls(ctx context.Context, urlIds []primitive.ObjectID) error
+	GetUrl(ctx context.Context, query bson.D) (*model.Url, error)
+	GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, userId primitive.ObjectID) (*types.PaginationResult[model.Url], error)
+	DeleteUrl(ctx context.Context, urlId primitive.ObjectID, userId primitive.ObjectID) error
+	DeleteUrls(ctx context.Context, urlIds []primitive.ObjectID, userId primitive.ObjectID) error
 }
 
 type MongoUrlRepository struct {
@@ -52,7 +52,7 @@ func (r *MongoUrlRepository) CreateUrl(ctx context.Context, url model.Url) (*mod
 	return &newUrl, nil
 }
 
-func (r *MongoUrlRepository) GetUrl(ctx context.Context, filter map[string]any) (*model.Url, error) {
+func (r *MongoUrlRepository) GetUrl(ctx context.Context, filter bson.D) (*model.Url, error) {
 
 	res := r.collection.FindOne(ctx, filter)
 	if errors.Is(res.Err(), mongo.ErrNoDocuments) {
@@ -68,12 +68,15 @@ func (r *MongoUrlRepository) GetUrl(ctx context.Context, filter map[string]any) 
 	return &url, nil
 }
 
-func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64) (*types.PaginationResult[model.Url], error) {
+func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, userId primitive.ObjectID) (*types.PaginationResult[model.Url], error) {
 
 	searchFilter := bson.D{
-		{"$or", bson.A{
-			bson.D{{"alias", bson.D{{"$regex", query}, {"$options", "i"}}}},
-			bson.D{{"originalUrl", bson.D{{"$regex", query}, {"$options", "i"}}}},
+		{"$and", bson.A{
+			bson.D{{"userId", userId}},
+			bson.D{{"$or", bson.A{
+				bson.D{{"alias", bson.D{{"$regex", query}, {"$options", "i"}}}},
+				bson.D{{"originalUrl", bson.D{{"$regex", query}, {"$options", "i"}}}},
+			}}},
 		}},
 	}
 
@@ -111,7 +114,13 @@ func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort typ
 	}, nil
 }
 
-func (r *MongoUrlRepository) DeleteUrl(ctx context.Context, filter map[string]any) error {
+func (r *MongoUrlRepository) DeleteUrl(ctx context.Context, urlId primitive.ObjectID, userId primitive.ObjectID) error {
+	filter := bson.D{
+		{"$and", bson.A{
+			bson.D{{"userId", userId}},
+			bson.D{{"_id", urlId}},
+		}},
+	}
 	_, err := r.collection.DeleteOne(ctx, filter)
 	if err != nil {
 		log.Println(err)
@@ -120,8 +129,13 @@ func (r *MongoUrlRepository) DeleteUrl(ctx context.Context, filter map[string]an
 	return nil
 }
 
-func (r *MongoUrlRepository) DeleteUrls(ctx context.Context, urlIds []primitive.ObjectID) error {
-	filter := bson.M{"_id": bson.M{"$in": urlIds}}
+func (r *MongoUrlRepository) DeleteUrls(ctx context.Context, urlIds []primitive.ObjectID, userId primitive.ObjectID) error {
+	filter := bson.D{
+		{"$and", bson.A{
+			bson.D{{"userId", userId}},
+			bson.M{"_id": bson.M{"$in": urlIds}},
+		}},
+	}
 	_, err := r.collection.DeleteMany(ctx, filter)
 	if err != nil {
 		log.Println(err)

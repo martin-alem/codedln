@@ -5,7 +5,6 @@ import (
 	"codedln/util/constant"
 	"codedln/util/helpers"
 	"codedln/util/types"
-	"errors"
 	"net/http"
 )
 
@@ -20,7 +19,7 @@ func NewCreateUserSchema() CreateUserSchema {
 
 func (s CreateUserSchema) Validate() error {
 	if s.IdToken == "" {
-		return errors.New("id token must exist")
+		return http_error.New(http.StatusBadRequest, "id token must exist")
 	}
 	oAuthList := []types.OAuthSignIn{constant.GoogleSignIn, constant.GitHubSignIn}
 	if !helpers.InList(oAuthList, s.SignInWith, func(a types.OAuthSignIn, b types.OAuthSignIn) bool {

@@ -16,8 +16,10 @@ const (
 const AccessTokenTTL = 24 //hours
 const JwtCookieName = "_access_token"
 
-const AliasLength = 8
+const AliasMaxLength = 8
+const AliasMinLength = 3
 const AliasRetry = 50
 
-const Newest types.DateSort = -1
-const Oldest types.DateSort = 1
+const NewestDate types.DateSort = -1
+const OldestDate types.DateSort = 1
+const MaxLimit int64 = 25

@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"math/rand"
@@ -91,7 +92,9 @@ func (s *UrlService) CreateUrl(ctx context.Context, originalUrl string, alias st
 }
 
 func (s *UrlService) CheckAliasExistence(ctx context.Context, alias string) error {
-	url, err := s.repo.GetUrl(ctx, map[string]any{"alias": alias})
+
+	query := bson.D{{"alias", alias}}
+	url, err := s.repo.GetUrl(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -103,27 +106,51 @@ func (s *UrlService) CheckAliasExistence(ctx context.Context, alias string) erro
 	return nil
 }
 
-func (s *UrlService) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64) (*types.PaginationResult[model.Url], error) {
-	return s.repo.GetUrls(ctx, query, sort, limit)
+func (s *UrlService) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, userId string) (*types.PaginationResult[model.Url], error) {
+	userIdObj, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return nil, http_error.New(http.StatusInternalServerError, "unable to parse user id")
+	}
+	return s.repo.GetUrls(ctx, query, sort, limit, userIdObj)
 }
 
-func (s *UrlService) GetUrl(ctx context.Context, urlId string) (*model.Url, error) {
+func (s *UrlService) GetUrl(ctx context.Context, urlId string, userId string) (*model.Url, error) {
 	urlIdObj, err := primitive.ObjectIDFromHex(urlId)
 	if err != nil {
 		return nil, http_error.New(http.StatusInternalServerError, "unable to parse urlId")
 	}
-	return s.repo.GetUrl(ctx, map[string]any{"_id": urlIdObj})
+
+	userIdObj, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return nil, http_error.New(http.StatusInternalServerError, "unable to parse user id")
+	}
+
+	query := bson.D{{"$and", bson.A{
+		bson.D{{"_id", urlIdObj}},
+		bson.D{{"userId", userIdObj}},
+	}}}
+	return s.repo.GetUrl(ctx, query)
 }
 
-func (s *UrlService) DeleteUrl(ctx context.Context, urlId string) error {
+func (s *UrlService) DeleteUrl(ctx context.Context, urlId string, userId string) error {
 	urlIdObj, err := primitive.ObjectIDFromHex(urlId)
 	if err != nil {
 		return http_error.New(http.StatusInternalServerError, "unable to parse urlId")
 	}
-	return s.repo.DeleteUrl(ctx, map[string]any{"_id": urlIdObj})
+
+	userIdObj, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return http_error.New(http.StatusInternalServerError, "unable to parse user id")
+	}
+	return s.repo.DeleteUrl(ctx, urlIdObj, userIdObj)
 }
 
-func (s *UrlService) DeleteUrls(ctx context.Context, urlIds []string) error {
+func (s *UrlService) DeleteUrls(ctx context.Context, urlIds []string, userId string) error {
+
+	userIdObj, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return http_error.New(http.StatusInternalServerError, "unable to parse user id")
+	}
 
 	objectIDs := make([]primitive.ObjectID, len(urlIds))
 	for i, id := range urlIds {
@@ -135,12 +162,13 @@ func (s *UrlService) DeleteUrls(ctx context.Context, urlIds []string) error {
 		objectIDs[i] = oid
 	}
 
-	return s.repo.DeleteUrls(ctx, objectIDs)
+	return s.repo.DeleteUrls(ctx, objectIDs, userIdObj)
 
 }
 
 func (s *UrlService) Redirect(ctx context.Context, alias string) (string, error) {
-	url, err := s.repo.GetUrl(ctx, map[string]any{"alias": alias})
+	filter := bson.D{{"alias", alias}}
+	url, err := s.repo.GetUrl(ctx, filter)
 	if err != nil {
 		return "", err
 	}
@@ -153,7 +181,8 @@ func (s *UrlService) Redirect(ctx context.Context, alias string) (string, error)
 }
 
 func (s *UrlService) AliasExist(ctx context.Context, shortUrl string) (bool, error) {
-	url, err := s.repo.GetUrl(ctx, map[string]any{"alias": shortUrl})
+	filter := bson.D{{"alias", shortUrl}}
+	url, err := s.repo.GetUrl(ctx, filter)
 	if err != nil {
 		log.Println(err)
 		return true, err
