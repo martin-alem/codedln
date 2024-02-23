@@ -88,10 +88,10 @@ func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort typ
 	}
 
 	// Then, fetch the documents with sorting and limiting
-	pipeline := bson.D{
-		{Key: "$match", Value: searchFilter},
-		{Key: "$sort", Value: bson.D{{"createdAt", sort}}},
-		{Key: "$limit", Value: limit},
+	pipeline := bson.A{
+		bson.D{{Key: "$match", Value: searchFilter}},
+		bson.D{{Key: "$sort", Value: bson.D{{"createdAt", sort}}}},
+		bson.D{{Key: "$limit", Value: limit}},
 	}
 
 	opts := options.Aggregate().SetMaxTime(2 * time.Second)

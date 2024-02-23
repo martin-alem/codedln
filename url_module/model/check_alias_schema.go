@@ -7,7 +7,7 @@ import (
 )
 
 type CheckAliasSchema struct {
-	Alias string
+	Alias string `json:"alias"`
 }
 
 func NewCheckAliasSchema() CheckAliasSchema {

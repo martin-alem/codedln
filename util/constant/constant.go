@@ -4,6 +4,7 @@ import "codedln/util/types"
 
 const MaxPayloadSize int64 = 10_485_760 // 10MB
 const UserCollection = "users"
+const UrlCollection = "urls"
 
 const GoogleSignIn types.OAuthSignIn = "google"
 const GitHubSignIn types.OAuthSignIn = "github"

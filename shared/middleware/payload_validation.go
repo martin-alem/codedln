@@ -20,7 +20,7 @@ func PayloadValidationMiddleware[T types.ValidatableSchema](factory func() T) ty
 			payloadSchema := factory()
 
 			if err := decoder.Decode(&payloadSchema); err != nil {
-				return http_error.New(http.StatusBadRequest, "invalid payload")
+				return http_error.New(http.StatusBadRequest, "empty payload not allowed")
 			}
 
 			// Validate fields

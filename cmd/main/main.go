@@ -3,7 +3,8 @@ package main
 import (
 	"codedln/shared/mongodb"
 	"codedln/shared/redis"
-	"codedln/user_module/module"
+	url "codedln/url_module/module"
+	user "codedln/user_module/module"
 	"codedln/util/helpers"
 	"context"
 	"errors"
@@ -46,7 +47,8 @@ func main() {
 	rateLimiter := redis_rate.NewLimiter(rClient)
 
 	//Mount Modules
-	module.UserModule(r, rateLimiter, db)
+	user.UserModule(r, rateLimiter, db)
+	url.UrlModule(r, rateLimiter, db)
 
 	//Setup Http Server
 	server := &http.Server{
