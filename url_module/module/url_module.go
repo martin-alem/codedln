@@ -64,7 +64,7 @@ func UrlModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Databa
 			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("POST")
 
-	urlRouter.HandleFunc("/{urlId}",
+	urlRouter.HandleFunc("/get_url/{urlId}",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.GetUrl,
 			middleware.AuthenticationMiddleware,
@@ -77,7 +77,7 @@ func UrlModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Databa
 			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("GET")
 
-	urlRouter.HandleFunc("/{urlId}",
+	urlRouter.HandleFunc("/delete_url/{urlId}",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.DeleteUrl,
 			middleware.AuthenticationMiddleware,
@@ -90,7 +90,7 @@ func UrlModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Databa
 			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("DELETE")
 
-	urlRouter.HandleFunc("",
+	urlRouter.HandleFunc("/create_url",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.CreateUrl,
 			middleware.AuthenticationMiddleware,
@@ -104,7 +104,7 @@ func UrlModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Databa
 			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("POST")
 
-	urlRouter.HandleFunc("",
+	urlRouter.HandleFunc("/get_urls",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.GetUrls,
 			middleware.AuthenticationMiddleware,
@@ -117,14 +117,14 @@ func UrlModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Databa
 			middleware.ValidateAPIKeyMiddleware,
 		))).Methods("GET")
 
-	urlRouter.HandleFunc("",
+	urlRouter.HandleFunc("/delete_urls",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.DeleteUrls,
 			middleware.AuthenticationMiddleware,
 			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
-				Rate:   1000,
-				Burst:  500,
+				Rate:   10,
+				Burst:  50,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,

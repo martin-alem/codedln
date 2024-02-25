@@ -3,7 +3,6 @@ package model
 import (
 	"codedln/shared/http_error"
 	"codedln/util/constant"
-	"fmt"
 	"net/http"
 	"regexp"
 )
@@ -20,7 +19,6 @@ func NewCreateUrlSchema() CreateUrlSchema {
 }
 
 func (s CreateUrlSchema) Validate() error {
-	fmt.Println(s)
 	if s.Alias != "" && (len(s.Alias) < constant.AliasMinLength || len(s.Alias) > constant.AliasMaxLength) {
 		return http_error.New(http.StatusBadRequest, "alias length must be within 8 characters")
 	}

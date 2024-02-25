@@ -7,6 +7,7 @@ import (
 	"codedln/util/constant"
 	"codedln/util/helpers"
 	"codedln/util/types"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -42,7 +43,7 @@ func (c *UrlController) CreateUrl(w http.ResponseWriter, r *http.Request) error 
 	UrlValue := r.Context().Value(constant.PayloadKey)
 
 	if UrlValue == nil {
-		return http_error.New(http.StatusBadRequest, "unable to get url payload")
+		return http_error.New(http.StatusBadRequest, "unable to get payload")
 	}
 
 	UrlPayload, ok := UrlValue.(model.CreateUrlSchema)
@@ -138,6 +139,7 @@ func (c *UrlController) GetUrl(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	vars := mux.Vars(r)
+	fmt.Println("RAW: ", vars)
 	urlId, exist := vars["urlId"]
 	if !exist {
 		return http_error.New(http.StatusBadRequest, "no url id found")

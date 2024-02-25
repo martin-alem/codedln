@@ -129,7 +129,11 @@ func (s *UrlService) GetUrl(ctx context.Context, urlId string, userId string) (*
 		bson.D{{"_id", urlIdObj}},
 		bson.D{{"userId", userIdObj}},
 	}}}
-	return s.repo.GetUrl(ctx, query)
+	url, err := s.repo.GetUrl(ctx, query)
+	if url == nil {
+		return nil, http_error.New(http.StatusNotFound, "unable to get url for user")
+	}
+	return url, err
 }
 
 func (s *UrlService) DeleteUrl(ctx context.Context, urlId string, userId string) error {
