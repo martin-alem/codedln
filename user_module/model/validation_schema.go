@@ -9,8 +9,8 @@ import (
 )
 
 type CreateUserSchema struct {
-	IdToken    string
-	SignInWith types.OAuthSignIn
+	IdToken    string            `json:"idToken"`
+	SignInWith types.OAuthSignIn `json:"signInWith"`
 }
 
 func NewCreateUserSchema() CreateUserSchema {

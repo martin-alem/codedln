@@ -33,6 +33,8 @@ func main() {
 	r := mux.NewRouter()
 
 	r.NotFoundHandler = helpers.NotFound()
+	r.MethodNotAllowedHandler = helpers.MethodNotAllowed()
+	r.Methods(http.MethodOptions).HandlerFunc(helpers.PreflightRequest())
 
 	//Connect to mongo database
 	mClient := mongodb.ConnectToDatabase()

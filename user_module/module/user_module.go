@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -29,51 +30,47 @@ func UserModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Datab
 	userRouter.HandleFunc("/logout",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			userController.Logout,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   10,
 				Burst:  5,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("DELETE")
+		))).Methods(http.MethodDelete)
 
 	userRouter.HandleFunc("",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			userController.DeleteUser,
 			middleware.AuthenticationMiddleware,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   100,
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("DELETE")
+		))).Methods(http.MethodDelete)
 
 	userRouter.HandleFunc("",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			userController.CreateUser,
 			middleware.PayloadValidationMiddleware(model.NewCreateUserSchema),
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   10,
 				Burst:  5,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("POST")
+		))).Methods(http.MethodPost)
 
 	userRouter.HandleFunc("",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			userController.GetUser,
 			middleware.AuthenticationMiddleware,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   100,
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("GET")
+		))).Methods(http.MethodGet)
 }

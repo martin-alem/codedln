@@ -31,6 +31,10 @@ func GetClientIP(req *http.Request) string {
 // JSONResponse sends a JSON response with a given status code.
 func JSONResponse(w http.ResponseWriter, statusCode int, data any) error {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.WriteHeader(statusCode)
 
 	var payload any
@@ -117,6 +121,27 @@ func NotFound() http.HandlerFunc {
 		w.WriteHeader(http.StatusNotFound)
 		data := map[string]interface{}{"message": "Resource Not Found", "statusCode": http.StatusNotFound, "path": r.URL.Path, "method": r.Method, "timestamp": time.Now().UTC()}
 		_ = json.NewEncoder(w).Encode(data)
+	}
+}
+
+func MethodNotAllowed() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		data := map[string]interface{}{"message": "Method Not Allowed", "statusCode": http.StatusMethodNotAllowed, "path": r.URL.Path, "method": r.Method, "timestamp": time.Now().UTC()}
+		_ = json.NewEncoder(w).Encode(data)
+	}
+}
+
+func PreflightRequest() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, PATCH, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 }
 

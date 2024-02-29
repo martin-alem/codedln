@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -29,105 +30,97 @@ func UrlModule(router *mux.Router, limiter *redis_rate.Limiter, db *mongo.Databa
 	urlRouter.HandleFunc("/redirect",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.Redirect,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   1000,
 				Burst:  500,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("GET")
+		))).Methods(http.MethodGet)
 
 	urlRouter.HandleFunc("/check_alias",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.CheckAliasExistence,
 			middleware.PayloadValidationMiddleware(model.NewCheckAliasSchema),
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   10,
 				Burst:  5,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("POST")
+		))).Methods(http.MethodPost)
 
 	urlRouter.HandleFunc("/guest",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.CreateUrl,
 			middleware.PayloadValidationMiddleware(model.NewCreateUrlSchema),
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   10,
 				Burst:  5,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("POST")
+		))).Methods(http.MethodPost)
 
 	urlRouter.HandleFunc("/get_url/{urlId}",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.GetUrl,
 			middleware.AuthenticationMiddleware,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   100,
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("GET")
+		))).Methods(http.MethodGet)
 
 	urlRouter.HandleFunc("/delete_url/{urlId}",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.DeleteUrl,
 			middleware.AuthenticationMiddleware,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   100,
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("DELETE")
+		))).Methods(http.MethodDelete)
 
 	urlRouter.HandleFunc("/create_url",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.CreateUrl,
 			middleware.AuthenticationMiddleware,
 			middleware.PayloadValidationMiddleware(model.NewCreateUrlSchema),
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   10,
 				Burst:  5,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("POST")
+		))).Methods(http.MethodPost)
 
 	urlRouter.HandleFunc("/get_urls",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.GetUrls,
 			middleware.AuthenticationMiddleware,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   1000,
 				Burst:  500,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("GET")
+		))).Methods(http.MethodGet)
 
 	urlRouter.HandleFunc("/delete_urls",
 		middleware.ExceptionMiddleware(middleware.ChainMiddlewares(
 			urlController.DeleteUrls,
 			middleware.AuthenticationMiddleware,
-			middleware.CorsMiddleware,
 			middleware.RateLimitMiddleware(limiter, redis_rate.Limit{
 				Rate:   10,
 				Burst:  50,
 				Period: time.Minute * 2,
 			}),
 			middleware.ValidateAPIKeyMiddleware,
-		))).Methods("DELETE")
+		))).Methods(http.MethodDelete)
 
 }

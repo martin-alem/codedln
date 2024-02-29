@@ -15,7 +15,7 @@ const (
 )
 
 const AccessTokenTTL = 24 //hours
-const JwtCookieName = "_access_token"
+const JwtCookieName = "_codedln_access_token"
 
 const AliasMaxLength = 8
 const AliasMinLength = 3
