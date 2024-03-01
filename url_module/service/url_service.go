@@ -106,12 +106,12 @@ func (s *UrlService) CheckAliasExistence(ctx context.Context, alias string) erro
 	return nil
 }
 
-func (s *UrlService) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, userId string) (*types.PaginationResult[model.Url], error) {
+func (s *UrlService) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, skip int64, userId string) (*types.PaginationResult[model.Url], error) {
 	userIdObj, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
 		return nil, http_error.New(http.StatusInternalServerError, "unable to parse user id")
 	}
-	return s.repo.GetUrls(ctx, query, sort, limit, userIdObj)
+	return s.repo.GetUrls(ctx, query, sort, limit, skip, userIdObj)
 }
 
 func (s *UrlService) GetUrl(ctx context.Context, urlId string, userId string) (*model.Url, error) {

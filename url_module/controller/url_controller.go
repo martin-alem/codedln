@@ -95,6 +95,7 @@ func (c *UrlController) GetUrls(w http.ResponseWriter, r *http.Request) error {
 
 	var sort types.DateSort
 	var limit int64
+	var skip int64
 
 	search := query.Get("query")
 	sortStr := query.Get("date_sort")
@@ -112,13 +113,21 @@ func (c *UrlController) GetUrls(w http.ResponseWriter, r *http.Request) error {
 
 	limitStr := query.Get("limit")
 	val, err := strconv.ParseInt(limitStr, 10, 64)
-	if err != nil {
+	if err != nil || val < 0 {
 		limit = constant.MaxLimit
 	} else {
 		limit = val
 	}
 
-	result, err := c.urlService.GetUrls(r.Context(), search, sort, limit, UserIdPayload.UserId)
+	skipStr := query.Get("skip")
+	val, err = strconv.ParseInt(skipStr, 10, 64)
+	if err != nil || val < 0 {
+		skip = 0
+	} else {
+		skip = val * limit
+	}
+
+	result, err := c.urlService.GetUrls(r.Context(), search, sort, limit, skip, UserIdPayload.UserId)
 	if err != nil {
 		return err
 	}
@@ -217,6 +226,5 @@ func (c *UrlController) Redirect(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	http.Redirect(w, r, originalUrl, http.StatusTemporaryRedirect)
-	return nil
+	return helpers.JSONResponse(w, http.StatusOK, originalUrl)
 }

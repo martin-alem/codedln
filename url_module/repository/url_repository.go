@@ -18,7 +18,7 @@ import (
 type UrlRepository interface {
 	CreateUrl(ctx context.Context, url model.Url) (*model.Url, error)
 	GetUrl(ctx context.Context, query bson.D) (*model.Url, error)
-	GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, userId primitive.ObjectID) (*types.PaginationResult[model.Url], error)
+	GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, skip int64, userId primitive.ObjectID) (*types.PaginationResult[model.Url], error)
 	DeleteUrl(ctx context.Context, urlId primitive.ObjectID, userId primitive.ObjectID) error
 	DeleteUrls(ctx context.Context, urlIds []primitive.ObjectID, userId primitive.ObjectID) error
 }
@@ -68,7 +68,7 @@ func (r *MongoUrlRepository) GetUrl(ctx context.Context, filter bson.D) (*model.
 	return &url, nil
 }
 
-func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, userId primitive.ObjectID) (*types.PaginationResult[model.Url], error) {
+func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort types.DateSort, limit int64, skip int64, userId primitive.ObjectID) (*types.PaginationResult[model.Url], error) {
 
 	searchFilter := bson.D{
 		{"$and", bson.A{
@@ -91,6 +91,7 @@ func (r *MongoUrlRepository) GetUrls(ctx context.Context, query string, sort typ
 	pipeline := bson.A{
 		bson.D{{Key: "$match", Value: searchFilter}},
 		bson.D{{Key: "$sort", Value: bson.D{{"createdAt", sort}}}},
+		bson.D{{Key: "$skip", Value: skip}},
 		bson.D{{Key: "$limit", Value: limit}},
 	}
 
